@@ -36,6 +36,12 @@ export class User {
 
   @UpdateDateColumn()
   updated_at: Date;
+  
+  @Column({ unique: true })
+  email: string;
+
+  @Column('text', { array: true, default: ['USER'] })
+  roles: string[];
 
   @BeforeInsert()
   async hashPassword() {
