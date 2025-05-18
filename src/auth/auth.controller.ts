@@ -7,6 +7,7 @@ import {
   UseGuards,
   Get
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
@@ -18,14 +19,27 @@ import { GetCurrentUser } from './decorators/get-current-user.decorator';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import { AccessTokenGuard } from './guards/access-token.guard';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // Endpoint para registro de usuarios
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Registro de usuario nuevo' })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Usuario registrado y tokens generados correctamente',
+    schema: {
+      properties: {
+        access_token: { type: 'string' },
+        refresh_token: { type: 'string' }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Datos de registro inválidos' })
+  @ApiResponse({ status: 409, description: 'El email ya está registrado' })
   async register(@Body() createUserDto: CreateUserDto): Promise<Tokens> {
     return this.authService.register(createUserDto);
   }
@@ -33,13 +47,28 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Iniciar sesión' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Inicio de sesión exitoso',
+    schema: {
+      properties: {
+        access_token: { type: 'string' },
+        refresh_token: { type: 'string' }
+      }
+    }
+  })
+  @ApiResponse({ status: 401, description: 'Credenciales inválidas' })
   async login(@Body() authDto: AuthDto): Promise<Tokens> {
     return this.authService.login(authDto);
   }
 
-  @UseGuards(AccessTokenGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Cerrar sesión' })
+  @ApiResponse({ status: 200, description: 'Sesión cerrada correctamente' })
+  @ApiResponse({ status: 401, description: 'No autorizado' })
   async logout(@GetCurrentUserId() userId: number): Promise<boolean> {
     return this.authService.logout(userId);
   }
@@ -48,6 +77,20 @@ export class AuthController {
   @UseGuards(RefreshTokenGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Refrescar tokens' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Tokens refrescados correctamente',
+    schema: {
+      properties: {
+        access_token: { type: 'string' },
+        refresh_token: { type: 'string' }
+      }
+    }
+  })
+  @ApiResponse({ status: 401, description: 'No autorizado' })
+  @ApiResponse({ status: 403, description: 'Acceso denegado' })
   async refreshTokens(
     @GetCurrentUserId() userId: number,
     @GetCurrentUser('refreshToken') refreshToken: string,
@@ -55,8 +98,11 @@ export class AuthController {
     return this.authService.refreshTokens(userId, refreshToken);
   }
 
-  @UseGuards(AccessTokenGuard)
   @Get('profile')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Obtener perfil del usuario' })
+  @ApiResponse({ status: 200, description: 'Perfil obtenido correctamente' })
+  @ApiResponse({ status: 401, description: 'No autorizado' })
   getProfile(@GetCurrentUser() user) {
     return user;
   }
