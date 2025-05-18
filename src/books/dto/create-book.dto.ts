@@ -1,3 +1,4 @@
+// src/books/dto/create-book.dto.ts
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional, IsNumber, IsPositive } from 'class-validator';
 
@@ -27,5 +28,10 @@ export class CreateBookDto {
   @IsPositive()
   authorId: number;
 
-  
+  // Añadir categoryId como opcional
+  @ApiPropertyOptional({ example: 1, description: 'ID de la categoría del libro' })
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  categoryId?: number;
 }

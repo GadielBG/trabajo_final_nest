@@ -15,21 +15,21 @@ export class BooksService {
   async create(createBookDto: CreateBookDto, userId: number): Promise<Book> {
     const book = this.booksRepository.create({
       ...createBookDto,
-      userId, // Guardamos el ID del usuario actual
+      userId,
     });
     return this.booksRepository.save(book);
   }
 
   async findAll(): Promise<Book[]> {
     return this.booksRepository.find({
-      relations: ['author'], // Para cargar también la información del autor
+      relations: ['author', 'category'], // Incluimos category en las relaciones
     });
   }
 
   async findOne(id: number): Promise<Book> {
     const book = await this.booksRepository.findOne({
       where: { id },
-      relations: ['author'],
+      relations: ['author', 'category'], // Incluimos category en las relaciones
     });
     if (!book) {
       throw new NotFoundException(`Book with ID ${id} not found`);

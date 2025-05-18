@@ -2,29 +2,21 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD } from '@nestjs/core';
-
-// Módulos
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { AuthorsModule } from './authors/authors.module';
 import { BooksModule } from './books/books.module';
-
-// Guards
+import { CategoriesModule } from './categories/categories.module';
 import { AccessTokenGuard } from './auth/guards/access-token.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
-// Controllers y Services
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-
 @Module({
   imports: [
-    // Configuración global
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    
-    // Configuración de TypeORM
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -39,17 +31,15 @@ import { AppService } from './app.service';
         synchronize: true,
       }),
     }),
-    
-    // Módulos de la aplicación
     AuthModule,
     UsersModule,
     AuthorsModule,
     BooksModule,
+    CategoriesModule, 
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    // Registro global de guards para proteger todas las rutas por defecto
     {
       provide: APP_GUARD,
       useClass: AccessTokenGuard,

@@ -1,7 +1,8 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Author } from '../../authors/entities/author.entity';
 import { User } from '../../users/entities/user.entity';
-import { ApiProperty } from '@nestjs/swagger';
+import { Category } from '../../categories/entities/category.entity';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 @Entity('books')
 export class Book {
@@ -37,6 +38,15 @@ export class Book {
   @JoinColumn({ name: 'author_id' })
   author: Author;
 
+  // Nueva columna para la categoría
+  @ApiPropertyOptional({ example: 1, description: 'ID de la categoría del libro' })
+  @Column({ name: 'category_id', nullable: true })
+  categoryId: number;
+
+  @ManyToOne(() => Category, category => category.books)
+  @JoinColumn({ name: 'category_id' })
+  category: Category;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
@@ -49,7 +59,6 @@ export class Book {
   })
   updatedAt: Date;
 
-  // Nueva columna para almacenar el ID del usuario que creó el libro
   @ApiProperty({ 
     example: 1, 
     description: 'ID del usuario que creó el registro' 
@@ -57,7 +66,6 @@ export class Book {
   @Column({ name: 'user_id' })
   userId: number;
 
-  // Relación con User
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
