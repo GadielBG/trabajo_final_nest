@@ -1,33 +1,67 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-} from 'typeorm';
-import { Book } from '../../books/entities/book.entity';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { User } from '../../users/entities/user.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
-@Entity('authors') // Opcional: define nombre exacto de la tabla
+@Entity('authors')
 export class Author {
+  @ApiProperty({ example: 1, description: 'ID único del autor' })
   @PrimaryGeneratedColumn()
-  id: number; // a) author ID
+  id: number;
 
+  @ApiProperty({ example: 'Gabriel', description: 'Nombre del autor' })
   @Column()
-  name: string; // b) full name
+  firstName: string;
 
+  @ApiProperty({ example: 'García Márquez', description: 'Apellido del autor' })
   @Column()
-  nationality: string; // c) nacionalidad
+  lastName: string;
 
-  @Column({ type: 'date' })
-  birth_date: Date; // d) birth_date
+  @ApiProperty({ 
+    example: '1927-03-06', 
+    description: 'Fecha de nacimiento del autor',
+    required: false 
+  })
+  @Column({ nullable: true, type: 'date' })
+  birthdate: Date;
 
-  @CreateDateColumn({ type: 'timestamp' })
-  created_at: Date; // e) fecha de creación
+  @ApiProperty({ 
+    example: 'Colombia', 
+    description: 'País de origen del autor',
+    required: false 
+  })
+  @Column({ nullable: true })
+  country: string;
 
-  @UpdateDateColumn({ type: 'timestamp' })
-  updated_at: Date; // f) fecha de actualización
+  @ApiProperty({ 
+    example: 'Escritor y periodista colombiano, ganador del Premio Nobel de Literatura en 1982.', 
+    description: 'Biografía breve del autor',
+    required: false 
+  })
+  @Column({ nullable: true, type: 'text' })
+  biography: string;
 
-  @OneToMany(() => Book, (book) => book.author)
-  books: Book[];
+  @CreateDateColumn({
+    name: 'created_at',
+    type: 'timestamp',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+  })
+  updatedAt: Date;
+
+  // Nueva columna para almacenar el ID del usuario que creó el autor
+  @ApiProperty({ 
+    example: 1, 
+    description: 'ID del usuario que creó el registro' 
+  })
+  @Column({ name: 'user_id' })
+  userId: number;
+
+  // Relación con User (opcional si quieres cargar datos del usuario)
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 }

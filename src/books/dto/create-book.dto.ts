@@ -1,22 +1,31 @@
-import { IsString, IsInt } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsOptional, IsNumber, IsPositive } from 'class-validator';
 
 export class CreateBookDto {
+  @ApiProperty({ example: 'Cien años de soledad', description: 'Título del libro' })
+  @IsNotEmpty()
   @IsString()
-  tittle: string;
+  title: string;
 
+  @ApiPropertyOptional({ example: 1967, description: 'Año de publicación' })
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  year?: number;
+
+  @ApiPropertyOptional({ 
+    example: 'Una de las obras más importantes...', 
+    description: 'Descripción del libro' 
+  })
+  @IsOptional()
   @IsString()
-  isbn: string;
+  description?: string;
 
-  @IsString()
-  publisher: string;
+  @ApiProperty({ example: 1, description: 'ID del autor del libro' })
+  @IsNotEmpty()
+  @IsNumber()
+  @IsPositive()
+  authorId: number;
 
-  @IsInt()
-  publication_year: number;
-
-  @IsString()
-  genre: string;
-
-  @IsInt()
-  author_id: number;
+  
 }
-

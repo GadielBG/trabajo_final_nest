@@ -1,33 +1,64 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Author } from '../../authors/entities/author.entity';
+import { User } from '../../users/entities/user.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
-@Entity('books') // Nombre explícito de tabla
+@Entity('books')
 export class Book {
+  @ApiProperty({ example: 1, description: 'ID único del libro' })
   @PrimaryGeneratedColumn()
-  id: number; // a) book ID
+  id: number;
 
+  @ApiProperty({ example: 'Cien años de soledad', description: 'Título del libro' })
   @Column()
-  tittle: string; // b) título (mantengo "tittle" si así lo piden)
+  title: string;
 
-  @Column()
-  isbn: string; // c) número ISBN
+  @ApiProperty({ 
+    example: 1967, 
+    description: 'Año de publicación',
+    required: false 
+  })
+  @Column({ nullable: true })
+  year: number;
 
-  @Column()
-  publisher: string; // d) editorial
+  @ApiProperty({ 
+    example: 'Una de las obras más importantes de la literatura latinoamericana.', 
+    description: 'Descripción del libro',
+    required: false 
+  })
+  @Column({ nullable: true, type: 'text' })
+  description: string;
 
-  @Column()
-  publication_year: number; // e) año de publicación
+  @ApiProperty({ example: 1, description: 'ID del autor del libro' })
+  @Column({ name: 'author_id' })
+  authorId: number;
 
-  @Column()
-  genre: string; // f) género
+  @ManyToOne(() => Author)
+  @JoinColumn({ name: 'author_id' })
+  author: Author;
 
-  @ManyToOne(() => Author, (author) => author.books, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'author_id' }) // Nombre explícito del campo FK
-  author: Author; // g) relación con autor
+  @CreateDateColumn({
+    name: 'created_at',
+    type: 'timestamp',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    name: 'updated_at',
+    type: 'timestamp',
+  })
+  updatedAt: Date;
+
+  // Nueva columna para almacenar el ID del usuario que creó el libro
+  @ApiProperty({ 
+    example: 1, 
+    description: 'ID del usuario que creó el registro' 
+  })
+  @Column({ name: 'user_id' })
+  userId: number;
+
+  // Relación con User
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 }

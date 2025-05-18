@@ -1,47 +1,51 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Patch,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthorsService } from './authors.service';
 import { CreateAuthorDto } from './dto/create-author.dto';
 import { UpdateAuthorDto } from './dto/update-author.dto';
+import { GetCurrentUserId } from '../auth/decorators/get-current-user-id.decorator';
 
+@ApiTags('Authors')
+@ApiBearerAuth('access-token')
 @Controller('authors')
 export class AuthorsController {
   constructor(private readonly authorsService: AuthorsService) {}
 
+  @Post()
+  @ApiOperation({ summary: 'Crear un nuevo autor' })
+  @ApiResponse({ status: 201, description: 'Autor creado correctamente' })
+  create(
+    @Body() createAuthorDto: CreateAuthorDto,
+    @GetCurrentUserId() userId: number,
+  ) {
+    return this.authorsService.create(createAuthorDto, userId);
+  }
+
   @Get()
+  @ApiOperation({ summary: 'Obtener todos los autores' })
   findAll() {
     return this.authorsService.findAll();
   }
 
-  @Post()
-  create(@Body() dto: CreateAuthorDto) {
-    return this.authorsService.create(dto);
-  }
-
   @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.authorsService.findOne(+id);
+  @ApiOperation({ summary: 'Obtener un autor por ID' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.authorsService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: number, @Body() dto: UpdateAuthorDto) {
-    return this.authorsService.update(+id, dto);
+  @ApiOperation({ summary: 'Actualizar un autor' })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateAuthorDto: UpdateAuthorDto,
+    @GetCurrentUserId() userId: number,
+  ) {
+    return this.authorsService.update(id, updateAuthorDto, userId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: number) {
-    return this.authorsService.remove(+id);
-  }
-
-  @Get(':id/books')
-  findBooksByAuthor(@Param('id') id: number) {
-    return this.authorsService.findBooksByAuthor(+id);
+  @ApiOperation({ summary: 'Eliminar un autor' })
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.authorsService.remove(id);
   }
 }
