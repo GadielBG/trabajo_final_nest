@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   Injectable,
   UnauthorizedException,
+  ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -11,10 +12,10 @@ import * as bcrypt from 'bcrypt';
 
 import { UsersService } from '../users/users.service';
 import { AuthDto } from './dto/auth.dto';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { Tokens } from './interfaces/tokens.interface';
 import { RefreshToken } from './entities/refresh-token.entity';
-import { TokenType } from './enums/token-type.enum';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +26,20 @@ export class AuthService {
     @InjectRepository(RefreshToken)
     private refreshTokenRepo: Repository<RefreshToken>,
   ) {}
+
+  async register(createUserDto: CreateUserDto): Promise<Tokens> {
+    // No necesitamos verificar si el usuario existe aquí, porque
+    // el usersService.create() ya lo hace
+
+    // Crear el usuario
+    const user = await this.usersService.create(createUserDto);
+    
+    // Generar tokens
+    const tokens = await this.getTokens(user.id, user.email, user.roles);
+    await this.updateRefreshToken(user.id, tokens.refresh_token);
+    
+    return tokens;
+  }
 
   async login(authDto: AuthDto): Promise<Tokens> {
     const { email, password } = authDto;
@@ -124,13 +139,5 @@ export class AuthService {
       access_token: accessToken,
       refresh_token: refreshToken,
     };
-  }
-
-  async validateUser(payload: JwtPayload): Promise<any> {
-    const user = await this.usersService.findOne(payload.sub);
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-    return user;
   }
 }

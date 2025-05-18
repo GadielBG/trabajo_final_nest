@@ -1,48 +1,80 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private readonly usersRepository: Repository<User>,
   ) {}
 
-  create(createUserDto: CreateUserDto) {
-    const user = this.usersRepository.create(createUserDto);
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    // Verificar si el usuario ya existe
+    const existingUser = await this.findByEmail(createUserDto.email);
+    if (existingUser) {
+      throw new ConflictException('Email already exists');
+    }
+
+    // Encriptar la contraseña
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
+    // Generar un username si no se proporciona
+    const username = createUserDto.email.split('@')[0];
+
+    // Crear el usuario con la contraseña encriptada y el username
+    const user = this.usersRepository.create({
+      ...createUserDto,
+      username, // Añadir username generado
+      password: hashedPassword,
+    });
+
     return this.usersRepository.save(user);
   }
 
-  findAll() {
+  async findAll(): Promise<User[]> {
     return this.usersRepository.find();
   }
 
-  async findOne(id: number): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id } });
+  async findOne(id: number): Promise<User> {
+    const user = await this.usersRepository.findOne({ 
+      where: { id } 
+    });
+    
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    
+    return user;
   }
 
-  async findByUsername(username: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { username } });
+  async findByEmail(email: string): Promise<User | null> {
+    const user = await this.usersRepository.findOne({ 
+      where: { email } 
+    });
+    
+    return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    await this.usersRepository.update(id, updateUserDto);
-    return this.findOne(id);
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.findOne(id);
+    
+    // Si se está actualizando la contraseña, hay que encriptarla
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+    
+    Object.assign(user, updateUserDto);
+    
+    return this.usersRepository.save(user);
   }
 
-  async remove(id: number) {
-    await this.usersRepository.delete(id);
-    return { message: 'User deleted successfully' };
+  async remove(id: number): Promise<void> {
+    const user = await this.findOne(id);
+    await this.usersRepository.remove(user);
   }
-  async findByEmail(email: string): Promise<User> {
-  const user = await this.userRepository.findOne({ 
-    where: { email } 
-  });
-  
-  return user;
-}
 }

@@ -1,10 +1,26 @@
 import { PartialType } from '@nestjs/mapped-types';
+import { IsEmail, IsString, IsOptional, MinLength, IsArray } from 'class-validator';
 import { CreateUserDto } from './create-user.dto';
-import { IsEnum, IsOptional } from 'class-validator';
-import { UserRole } from '../entities/user.entity';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  lastName?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  password?: string;
+
+  @IsOptional()
+  @IsArray()
+  roles?: string[];
 }

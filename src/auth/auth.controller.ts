@@ -10,6 +10,7 @@ import {
 
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 import { Tokens } from './interfaces/tokens.interface';
 import { Public } from './decorators/public.decorator';
 import { GetCurrentUserId } from './decorators/get-current-user-id.decorator';
@@ -20,6 +21,14 @@ import { AccessTokenGuard } from './guards/access-token.guard';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  // Endpoint para registro de usuarios
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  async register(@Body() createUserDto: CreateUserDto): Promise<Tokens> {
+    return this.authService.register(createUserDto);
+  }
 
   @Public()
   @Post('login')
